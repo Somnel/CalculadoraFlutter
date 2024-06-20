@@ -1,10 +1,12 @@
-import 'package:calculadora_flutter/services/calcular.dart';
+import 'package:calculadora_flutter/services/calcularadora.dart';
 import 'package:flutter/material.dart';
 
 
 
 void main() => runApp(const MaterialApp(
   home: App(),
+  title: 'Calculadora Flutter',
+  locale: Locale('pt', 'BR'),
 ));
 
 
@@ -20,13 +22,13 @@ class _AppState extends State<App> {
   var output = 0; // Variável de output
   var outputString = '0'; // Equação para o cálculo do output
   var regexIsNumeric = RegExp(r'[0-9]$');
-
+  var calculadora = Calculadora();
 
 
 
 
   Widget inputButton (Widget inputChild, Function() action) {
-    // TODO: Criar diretório '/widgets' e mover os widgets para lá
+
     return TextButton (
       style: ButtonStyle (
           backgroundColor: const WidgetStatePropertyAll<Color>(Colors.white),
@@ -46,19 +48,22 @@ class _AppState extends State<App> {
   Widget iconInputButton(Icon icon, Function() action) => inputButton(icon, action);
   Widget onlyInputButton(Text text) => inputButton(text, () {
     setState(() {
-      if(regexIsNumeric.hasMatch(outputString[outputString.length-1]) && outputString[outputString.length-1] != '.') {
+      String str = outputString[outputString.length-1];
+      if(regexIsNumeric.hasMatch(str) && str != '.') {
         outputString += text.data.toString();
       }
     });
   });
 
-  Widget textInputButton(Text text) => inputButton(text, () {setState(() {
-    if(outputString.length == 1 && outputString == '0') {
-      outputString = text.data.toString();
-    } else {
-      outputString += text.data.toString();
-    }
-  });});
+  Widget textInputButton(Text text) => inputButton(text, () {
+    setState(() {
+      if(outputString.length == 1 && outputString == '0') {
+        outputString = text.data.toString();
+      } else {
+        outputString += text.data.toString();
+      }
+    });
+  });
 
 
   List<Widget> createButtonInputs() {
@@ -69,11 +74,13 @@ class _AppState extends State<App> {
       fontSize: 32.0,
     );
 
-    // Actions:
+    // [Actions] :
+    // - Remover o último caractere da String de output
     actionRemove() {
       setState(() {
         if(outputString.length > 1) {
-          if(outputString[outputString.length-2] == '.') {
+          String temp = outputString[outputString.length-2];
+          if(temp == '.' || temp == '-') {
             outputString = outputString.substring(0, outputString.length-2);
           } else {
             outputString = outputString.substring(0, outputString.length-1);
@@ -84,6 +91,7 @@ class _AppState extends State<App> {
       });
     }
 
+    // - Calcular resultado
     actionResult() {
       String ultimoChar = outputString[outputString.length-1];
       if(outputString.length > 2) {
@@ -91,8 +99,8 @@ class _AppState extends State<App> {
           RegExp regexOp = RegExp(r'[\*\+\-]');
           if(regexOp.hasMatch(outputString)) {
             setState(() {
-              Calculadora calculadora = Calculadora(outputString);
-              double resultado = calculadora.calcular();
+              calculadora.setEquacao(outputString);
+              double resultado = calculadora.interpretar();
 
               outputString = resultado.toString();
             });
@@ -101,42 +109,49 @@ class _AppState extends State<App> {
       }
     }
 
-    // [Row 1]
+    // [/Actions]
+
+    // [Botões de input]
+    // - Coluna 1
     list.add(textInputButton(const Text('1', style: textStyle))); // Add 1
     list.add(textInputButton(const Text('2', style: textStyle))); // Add 2
     list.add(textInputButton(const Text('3', style: textStyle))); // Add 3
     list.add(onlyInputButton(const Text('+', style: textStyle))); // Add +
 
-    // [Row 2]
+    // - Coluna 2
     list.add(textInputButton(const Text('4', style: textStyle))); // Add 4
     list.add(textInputButton(const Text('5', style: textStyle))); // Add 5
     list.add(textInputButton(const Text('6', style: textStyle))); // Add 6
     list.add(onlyInputButton(const Text('-', style: textStyle))); // Add -
 
-    // [Row 3]
+    // - Coluna 3
     list.add(textInputButton(const Text('7', style: textStyle))); // Add 7
     list.add(textInputButton(const Text('8', style: textStyle))); // Add 8
     list.add(textInputButton(const Text('9', style: textStyle))); // Add 9
     list.add(onlyInputButton(const Text('*', style: textStyle))); // Add *
 
-    // [Row 4]
+    // - Coluna 4
     list.add(textInputButton(const Text('0', style: textStyle))); // Add 0
     list.add(onlyInputButton(const Text('.', style: textStyle))); // Add ,
     list.add(iconInputButton(const Icon(Icons.backspace, color: btnDataColor), actionRemove)); // Remove
     list.add(inputButton(const Text('=', style: textStyle), actionResult)); // Calc
+
+    // [/Botões de input]
+
 
     return list;
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Resolver erro : (RangeError (index): Invalid value: Not in inclusive range 0..3: 4) - Exemplo : 12 * 4 + 5 -7.4
-    // TODO: Transformar de double para algo similar a Long <- resolver RangeError
-    // TODO: Configurar propriedades de Widgets em base as dimensões da tela
+    // TODO: Criar diretório '/widgets' e mover os widgets para lá (Organizar)
     // TODO: Alterar configurações de propriedade quando alterado a "Rotação da Tela"
     // TODO: Permitir alterar conjunto de cores
     // TODO: Adicionar Botões para Limpar e de Divisão
-    // TODO: Transformar Text() de [Input Container] em uma caixa de texto
+    // TODO: Configurar propriedades de Widgets em base as dimensões da tela
+    // TODO: [Output Container] = "infinito" scroll horizontal
+    // TODO: [Input Container] = Resolver posicionamento e tamanho de cada Widget
+    // TODO: [Input Container] Transformar Text() em caixa de texto
 
     // [Widgets : Variáveis]
     var horizontalPadding = 16.0;
@@ -163,7 +178,6 @@ class _AppState extends State<App> {
                 alignment: Alignment.centerRight,
                 color: backgroundcolorOutputContainer,
                 child: Padding(
-                  // TODO: "infinito" scroll horizontal
                   padding: EdgeInsets.symmetric(vertical: 0, horizontal: horizontalPadding),
                   child: Text(
                     outputString,
@@ -178,7 +192,7 @@ class _AppState extends State<App> {
             ),
             Expanded(
               // [Input Container]
-              // TODO: Resolver posicionamento e tamanho de cada Widget
+
               flex: 3,
               child: Container (
                 decoration: ShapeDecoration (
