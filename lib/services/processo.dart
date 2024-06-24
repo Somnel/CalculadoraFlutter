@@ -1,8 +1,8 @@
-class Calculadora {
+class Processo {
 
   String equacao = '0'; // Equação original
 
-  Calculadora();
+  Processo();
   setEquacao(equacao) => this.equacao = equacao;
 
 
